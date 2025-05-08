@@ -7,4 +7,4 @@ With its eye-catching graphics, catchy sound effects, and easy-to-learn mechanic
 
 
 DISCLAIMER
-You may have to install VS Code (Visual Studio Code) ad then go to RUN->RUN WITHOUT DEBUGGING->(THE SMALL SEARCH BAR AT TOP AND CLICK ON CHROME OR WHATEVER BROWSER YOU USE
+You may have to install VS Code (Visual Studio Code) and then go to RUN->RUN WITHOUT DEBUGGING->(THE SMALL SEARCH BAR AT TOP AND CLICK ON CHROME OR WHATEVER BROWSER YOU USE
