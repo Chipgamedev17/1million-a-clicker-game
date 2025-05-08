@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clicker Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #6e7c7c, #c6e1e6); /* Calming gradient background */
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #money {
+      font-size: 2em;
+      margin-bottom: 20px;
+      transition: color 0.5s ease-in-out;
+    }
+
+    #clickButton {
+      padding: 20px 40px;
+      font-size: 1.5em;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: transform 0.2s ease-in-out;
+    }
+
+    #clickButton:hover {
+      background-color: #45a049;
+    }
+
+    #clickButton:active {
+      transform: scale(0.9);
+    }
+
+    #shop {
+      margin-top: 20px;
+      width: 300px;
+      height: 400px;
+      overflow-y: auto; /* Enables scrolling if the content overflows */
+      border: 1px solid #ddd;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 10px;
+    }
+
+    #upgrades {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .upgrade {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #d3d3d3;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .upgrade button {
+      padding: 5px 10px;
+      font-size: 1em;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .upgrade button:hover {
+      background-color: #45a049;
+    }
+
+    .upgrade:active {
+      transform: scale(0.95);
+    }
+
+    .description {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 5px;
+    }
+
+    #saveButton {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1.2em;
+      cursor: pointer;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #saveButton:hover {
+      background-color: #1976D2;
+    }
+
+    /* Particle effect styling */
+    .particle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: rgba(255, 165, 0, 0.8);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particleMove 1s forwards;
+    }
+
+    @keyframes particleMove {
+      0% {
+        transform: scale(1) translateY(0);
+      }
+      100% {
+        transform: scale(0) translateY(-100px);
+      }
+    }
+
+    /* Glow effect for reaching 1 million money */
+    .glow {
+      color: gold;
+      text-shadow: 0 0 15px gold, 0 0 30px gold, 0 0 45px gold, 0 0 60px gold;
+    }
+
+    /* Confetti animation */
+    @keyframes confetti {
+      0% { transform: rotate(0deg) translateY(0); }
+      100% { transform: rotate(360deg) translateY(300px); }
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: rgba(255, 0, 0, 0.8);
+      border-radius: 50%;
+      animation: confetti 2s linear infinite;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Clicker Game</h1>
+
+<div id="money">Money: 0</div>
+
+<button id="clickButton">Click Me!</button>
+
+<div id="shop">
+  <div id="upgrades">
+    <!-- Dynamically created upgrades will go here -->
+  </div>
+</div>
+
+<button id="saveButton">Save Progress</button>
+
+<script>
+  // Game variables
+  let money = 0;
+  let clickPower = 1;
+  let autoClickerActive = false;
+
+  // Create upgrades
+  const upgrades = [];
+  const upgradeNames = [
+    "Double Click Power", "Triple Click Power", "Auto Clicker", "Quadruple Click Power", 
+    "Instant Click", "Time Multiplier", "Mega Click Power", "Boost Clicker", "Coin Collector", 
+    "Super Click Power", "Click Boost", "Time Manipulator", "Click Storm", "Frenzy Mode", 
+    "Lightning Clicks", "Rocket Clicks", "Explosion Click", "Turbo Clicker", "Mega Coin Collector", 
+    "Hyper Click Power"
+  ];
+  const upgradeCosts = [10, 50, 200, 1000, 500, 1500, 3000, 6000, 10000, 15000, 
+                        20000, 25000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000];
+  const upgradeDescriptions = [
+    "Doubles your click power.", "Triples your click power.", "Start earning clicks automatically.", 
+    "Quadruples your click power.", "Instantly click every time.", "Multiply your click power over time.", 
+    "Gives you mega click power.", "Boost your click power dramatically.", "Earn more coins with each click.", 
+    "Supercharge your clicks.", "Boost your click power even more.", "Manipulate time to get more clicks.", 
+    "Unleash a storm of clicks.", "Enter frenzy mode for rapid clicks.", "Activate lightning-fast clicks.", 
+    "Rocket-like clicks to boost your score.", "Create an explosion with every click.", 
+    "Turbocharge your clicks.", "Mega coin collector that boosts earnings.", "Unleash hyper click power."
+  ];
+
+  // Initialize upgrades and populate shop
+  function initUpgrades() {
+    const shopDiv = document.getElementById('upgrades');
+    for (let i = 0; i < upgradeNames.length; i++) {
+      const upgrade = {
+        name: upgradeNames[i],
+        cost: upgradeCosts[i],
+        description: upgradeDescriptions[i],
+        bought: false,
+        effect: function() {
+          if (this.name.includes("Click Power")) {
+            clickPower *= 2;
+          } else if (this.name === "Auto Clicker") {
+            autoClickerActive = true;
+          }
+          this.bought = true;
+        }
+      };
+      upgrades.push(upgrade);
+
+      const upgradeDiv = document.createElement('div');
+      upgradeDiv.className = 'upgrade';
+      upgradeDiv.innerHTML = `
+        <span>${upgrade.name} (Cost: ${upgrade.cost} money)</span>
+        <p class="description">${upgrade.description}</p>
+        <button>Buy</button>`;
+      const button = upgradeDiv.querySelector('button');
+      button.addEventListener('click', () => buyUpgrade(upgrade, button));
+      shopDiv.appendChild(upgradeDiv);
+    }
+  }
+
+  // Buy upgrade function
+  function buyUpgrade(upgrade, button) {
+    if (money >= upgrade.cost && !upgrade.bought) {
+      money -= upgrade.cost;
+      upgrade.effect();
+      document.getElementById('money').textContent = `Money: ${money}`;
+      button.disabled = true;
+      button.textContent = 'Bought';
+    } else if (upgrade.bought) {
+      alert('You already bought this upgrade!');
+    } else {
+      alert('Not enough money!');
+    }
+  }
+
+  // Click button event
+  const clickButton = document.getElementById('clickButton');
+  clickButton.addEventListener('click', () => {
+    money += clickPower;
+    document.getElementById('money').textContent = `Money: ${money}`;
+
+    // Check for 1 million money threshold
+    if (money >= 1000000) {
+      triggerCelebration();
+    }
+
+    // Particle effect
+    createParticles(event.clientX, event.clientY);
+
+    // Bounce animation
+    clickButton.style.animation = 'bounce 0.3s ease-in-out';
+    setTimeout(() => clickButton.style.animation = '', 300);
+  });
+
+  // Celebration when 1 million money is reached
+  function triggerCelebration() {
+    // Apply glowing effect to money text
+    const moneyText = document.getElementById('money');
+    moneyText.classList.add('glow');
+
+    // Show confetti
+    for (let i = 0; i < 100; i++) {
+      createConfetti();
+    }
+  }
+
+  // Create particles (confetti)
+  function createConfetti() {
+    const confetti = document.createElement('div');
+    confetti.classList.add('confetti');
+    document.body.appendChild(confetti);
+
+    const randomX = Math.random() * window.innerWidth;
+    const randomDelay = Math.random() * 1 + 's';
+    confetti.style.left = `${randomX}px`;
+    confetti.style.animationDelay = randomDelay;
+
+    setTimeout(() => confetti.remove(), 3000); // Remove after animation
+  }
+
+  // Particle effect function
+  function createParticles(x, y) {
+    for (let i = 0; i < 20; i++) {
+      const particle = document.createElement('div');
+      particle.classList.add('particle');
+      document.body.appendChild(particle);
+      const angle = Math.random() * 2 * Math.PI;
+      const distance = Math.random() * 100 + 50;
+      const speed = Math.random() * 2 + 1;
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed;
+      particle.style.left = `${x - 5}px`;
+      particle.style.top = `${y - 5}px`;
+      particle.style.animation = `particleMove 1s forwards`;
+
+      // Remove particle after animation
+      setTimeout(() => particle.remove(), 1000);
+    }
+  }
+
+  // Save progress button
+  const saveButton = document.getElementById('saveButton');
+  saveButton.addEventListener('click', saveProgress);
+
+  // Save progress function
+  function saveProgress() {
+    localStorage.setItem('money', money);
+    localStorage.setItem('clickPower', clickPower);
+    localStorage.setItem('autoClickerActive', autoClickerActive);
+    localStorage.setItem('upgrades', JSON.stringify(upgrades));
+    alert('Progress saved!');
+  }
+
+  // Load progress function
+  function loadProgress() {
+    const savedMoney = localStorage.getItem('money');
+    if (savedMoney !== null) money = parseInt(savedMoney);
+
+    const savedClickPower = localStorage.getItem('clickPower');
+    if (savedClickPower !== null) clickPower = parseInt(savedClickPower);
+
+    const savedAutoClickerActive = localStorage.getItem('autoClickerActive');
+    if (savedAutoClickerActive !== null) autoClickerActive = JSON.parse(savedAutoClickerActive);
+
+    const savedUpgrades = localStorage.getItem('upgrades');
+    if (savedUpgrades !== null) {
+      const loadedUpgrades = JSON.parse(savedUpgrades);
+      loadedUpgrades.forEach((upgrade, index) => {
+        upgrades[index].bought = upgrade.bought;
+        if (upgrades[index].bought) {
+          document.querySelectorAll('.upgrade button')[index].disabled = true;
+          document.querySelectorAll('.upgrade button')[index].textContent = 'Bought';
+        }
+      });
+    }
+
+    document.getElementById('money').textContent = `Money: ${money}`;
+  }
+
+  // Auto-clicker functionality (triggered every second)
+  setInterval(() => {
+    if (autoClickerActive) {
+      money += clickPower;
+      document.getElementById('money').textContent = `Money: ${money}`;
+      if (money >= 1000000) {
+        triggerCelebration();
+      }
+    }
+  }, 1000);
+
+  // Initialize the game
+  initUpgrades();
+  loadProgress();
+</script>
+
+</body>
+</html>
